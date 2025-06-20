@@ -21,7 +21,7 @@ We'll start with the MVP features
 
 4. Ability to post item/product
 - Users can switch into the profile screen and access the "sellers" dashboard (becoming a seller)
-- Sellers can create, edit, delete listings
+- Sellers can create, edit, delete and share listings
 
 5. Messaging System
 - Buyers can send inquiries directly to sellers
@@ -34,14 +34,13 @@ We'll start with the MVP features
 7. Favorites
 - Save listings for later
 
+Key problems that may occur
+- sharing a listing
+-- thjs required a websiye link, im not too well with responsivness when it comes to mobile - web as yet however this project should enhance that aspect
+- Filtering may become a slight problem but nothing i cant research and hajdle
+- Id like to add a recommendeds listing, recommendeds would take from clicks in a certain category or item, items purchased etc.
 
-This project is a starting point for a Flutter application.
+This project will begin as soon as the design is finished, the design started Thursday June 19, 2025
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Resources used will be listed below
+========================================
