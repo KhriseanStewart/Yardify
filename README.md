@@ -36,7 +36,8 @@ We'll start with the MVP features
 
 Key problems that may occur
 - sharing a listing
--- thjs required a websiye link, im not too well with responsivness when it comes to mobile - web as yet however this project should enhance that aspect
+-- this required a website link
+- Im not too well with responsivness when it comes to mobile - web as yet however this project should enhance that aspect
 - Filtering may become a slight problem but nothing i cant research and hajdle
 - Id like to add a recommendeds listing, recommendeds would take from clicks in a certain category or item, items purchased etc.
 
