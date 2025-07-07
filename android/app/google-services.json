@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "678290610580",
+    "firebase_url": "https://yardify-a22ca-default-rtdb.firebaseio.com",
+    "project_id": "yardify-a22ca",
+    "storage_bucket": "yardify-a22ca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:678290610580:android:51c07a19b624f555935781",
+        "android_client_info": {
+          "package_name": "com.example.yardify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiWBSz7ozaUXfVPcb00v84hKC03CJHMWA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
