@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yardify/mobile/database/item_list.dart';
+import 'package:yardify/mobile/screens/profile/preferences.dart';
 import 'package:yardify/mobile/screens/profile/profile.dart';
 import 'package:yardify/routes.dart';
 
@@ -17,13 +18,10 @@ class ProfileTabs extends StatelessWidget {
         actions: [
           IconButton(
             tooltip: 'Log out',
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.red.shade400,
-              foregroundColor: Colors.white,
-            ),
+            style: IconButton.styleFrom(foregroundColor: Colors.black),
             onPressed: () {
               ProductService().logout();
-              Navigator.pushReplacementNamed(context, AppRouter.mobilelogin);
+              Navigator.pushReplacementNamed(context, AppRouter.authgate);
             },
             icon: Icon(Icons.logout_outlined),
           ),
@@ -111,7 +109,17 @@ class ProfileTabs extends StatelessWidget {
                     },
                   ),
                   Divider(),
-                  ListTile(title: Text("Preferences")),
+                  ListTile(
+                    title: Text("Preferences"),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PreferenceScreen(),
+                        ),
+                      );
+                    },
+                  ),
                   Divider(),
                   ListTile(title: Text("Following")),
                   Divider(),

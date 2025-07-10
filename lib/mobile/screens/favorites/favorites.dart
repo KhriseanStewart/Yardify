@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:yardify/mobile/auth/authCheck/auth_service.dart';
 import 'package:yardify/mobile/database/item_list.dart';
 
-class FavoriteScreen extends StatelessWidget {
+class FavoriteScreen extends StatefulWidget {
   const FavoriteScreen({super.key});
 
+  @override
+  State<FavoriteScreen> createState() => _FavoriteScreenState();
+}
+
+class _FavoriteScreenState extends State<FavoriteScreen> {
   @override
   Widget build(BuildContext context) {
     String uid = AuthService().currentUser!.uid;

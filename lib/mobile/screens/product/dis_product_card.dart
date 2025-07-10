@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:yardify/routes.dart';
+import 'package:yardify/widgets/constant.dart';
 
 class ProductCard extends StatefulWidget {
   final QueryDocumentSnapshot<Object?> item;
@@ -48,8 +50,28 @@ class _ProductCardState extends State<ProductCard> {
                                 : '')
                           : (item['imageUrl'] ?? ''),
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Icon(Icons.error, color: Colors.red),
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Icon(
+                          Icons.image,
+                          color: Colors.grey,
+                          size: SizeConfig.widthPercentage(60),
+                        ),
+                      ),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) {
+                          return child;
+                        } else {
+                          return Shimmer.fromColors(
+                            baseColor: Colors.grey.shade200,
+                            highlightColor: Colors.grey.shade300,
+                            child: Container(
+                              width: double.infinity,
+                              height: double.infinity,
+                              color: Colors.grey,
+                            ),
+                          );
+                        }
+                      },
                     ),
                   ),
                   Positioned(
@@ -103,7 +125,7 @@ class _ProductCardState extends State<ProductCard> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
                   ),

@@ -51,7 +51,14 @@ class _ProfileRowState extends State<ProfileRow> {
               return Center(child: CircularProgressIndicator());
             }
             if (userSnapshot.hasError) {
-              return Center(child: Text('Error: ${userSnapshot.error}'));
+              String message;
+              final error = snapshot.error;
+              if (error is FirebaseException) {
+                message = "${error.message}";
+              } else {
+                message = 'Unexpected Error';
+              }
+              return Center(child: Text('Error: $message'));
             }
             if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
               return Center(child: Text('User not found'));

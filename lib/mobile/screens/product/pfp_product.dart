@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:yardify/mobile/database/item_list.dart';
 
+// ignore: must_be_immutable
 class PfpProduct extends StatefulWidget {
   String uid;
   PfpProduct({required this.uid});

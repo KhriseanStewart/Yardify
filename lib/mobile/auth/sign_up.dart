@@ -1,6 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:yardify/mobile/auth/authCheck/auth_service.dart';
+import 'package:yardify/mobile/database/item_list.dart';
 import 'package:yardify/mobile/screens/profile/profile.dart';
 import 'package:yardify/routes.dart';
 import 'package:yardify/widgets/constant.dart';
@@ -14,41 +18,55 @@ class MobileSignUp extends StatefulWidget {
   State<MobileSignUp> createState() => _MobileSignUpState();
 }
 
-final _signUpKey = GlobalKey<FormState>();
-final TextEditingController _emailController = TextEditingController();
-final TextEditingController _passwordController = TextEditingController();
-final TextEditingController _rePasswordController = TextEditingController();
-
 class _MobileSignUpState extends State<MobileSignUp> {
+  final _signUpKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _rePasswordController = TextEditingController();
+  bool isLoading = false;
+
   void handlesubmit() async {
     if (_signUpKey.currentState?.validate() ?? false) {
+      setState(() {
+        isLoading = true;
+        print(isLoading);
+      });
       final String email = _emailController.text.trim();
       final String password = _passwordController.text.trim();
       final String rePassword = _rePasswordController.text.trim();
 
       if (password != rePassword) {
         displaySnackBar(context, "Passwords do not match");
+        setState(() {
+          isLoading = false;
+          print(isLoading);
+        });
         return;
       } else {
         AuthService auth = AuthService();
         try {
-          auth.register(email, password);
+          User? result = await auth.register(email, password, context);
+          if (result?.uid != null || result!.uid.isNotEmpty) {
+            UserService().updateProfilePic(result!.uid, '');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ProfileScreen(title: 'Fill your Profile', signup: true),
+              ),
+            );
+          }
         } catch (e) {
           displaySnackBar(context, "Sign-up failed: $e");
-          return;
         } finally {
+          setState(() {
+            isLoading = false;
+            print(isLoading);
+          });
           // Clear the text fields after submission
           _emailController.clear();
           _passwordController.clear();
           _rePasswordController.clear();
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  ProfileScreen(title: "Fill Your Profile", signup: true),
-            ),
-          );
         }
       }
     }
@@ -56,6 +74,7 @@ class _MobileSignUpState extends State<MobileSignUp> {
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig.init(context);
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -66,7 +85,11 @@ class _MobileSignUpState extends State<MobileSignUp> {
               mainAxisAlignment: MainAxisAlignment.center,
               spacing: 14,
               children: [
-                Image.asset("assets/mobile/logo.png", height: 250, width: 250),
+                Image.asset(
+                  "assets/mobile/vecteezy_iphone-14-pro-screen-template-next-to-a-surprised-man_13337961.jpg",
+                  height: 250,
+                  width: 250,
+                ),
                 Text(
                   "Create your account",
                   style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
@@ -108,11 +131,11 @@ class _MobileSignUpState extends State<MobileSignUp> {
                 ),
                 CustomButton(
                   btntext: "Sign Up",
-                  bgcolor: Colors.black,
+                  bgcolor: isLoading ? Colors.grey.shade300 : Colors.black,
                   textcolor: Colors.white,
                   isBoldtext: true,
                   size: 18,
-                  onpress: handlesubmit,
+                  onpress: isLoading ? null : handlesubmit,
                 ),
                 Text(
                   "Or continue with",

@@ -22,11 +22,13 @@ class _GetStartedState extends State<GetStarted> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    UserService().requestPermissions();
     checkRememberMe();
   }
 
   void checkRememberMe() async {
     final data = await PreferenceManager.getBool();
+    print(data);
     if (data != null && data == true) {
       final user = widget.auth.currentUser;
       print(user);
@@ -43,7 +45,7 @@ class _GetStartedState extends State<GetStarted> {
           .doc(uid)
           .get();
       if (userData.exists) {
-        Navigator.pushReplacementNamed(context, AppRouter.mainlayout);
+        Navigator.pushReplacementNamed(context, AppRouter.authgate);
       } else {
         displaySnackBar(context, "Complete the Profile Form");
         Navigator.pushReplacement(
@@ -111,7 +113,7 @@ class _GetStartedState extends State<GetStarted> {
               textcolor: Colors.white,
               isBoldtext: true,
               onpress: () {
-                Navigator.pushNamed(context, AppRouter.mobilesignup);
+                Navigator.pushReplacementNamed(context, AppRouter.authgate);
               },
             ),
             Row(
@@ -123,7 +125,7 @@ class _GetStartedState extends State<GetStarted> {
                 ),
                 TextButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, AppRouter.mobilelogin);
+                    Navigator.pushReplacementNamed(context, AppRouter.authgate);
                   },
                   child: Text("Log in"),
                 ),

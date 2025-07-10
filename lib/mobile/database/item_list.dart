@@ -5,20 +5,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:uuid/uuid.dart';
+import 'package:yardify/routes.dart';
+
+var uuid = Uuid();
+final FirebaseStorage _storage = FirebaseStorage.instance;
 
 class ProductService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-
-  // Add Item
-  Future<void> addItem(String item) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    await _db.collection('users').doc(user.uid).collection('grocery').add({
-      'name': item,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-  }
 
   // Get Items as Stream
   Stream<QuerySnapshot> getItems() {
@@ -35,23 +31,6 @@ class ProductService {
     return _db.collection("favorites").where('uid', isEqualTo: uid).snapshots();
   }
 
-  // Get Items as Stream
-  Stream<DocumentSnapshot> getUser() {
-    final user = FirebaseAuth.instance.currentUser;
-    return _db.collection("users").doc(user!.uid).snapshots();
-  }
-
-  // Delete item
-  Future<void> deleteItem(String docId) async {
-    final user = FirebaseAuth.instance.currentUser;
-    await _db
-        .collection('users')
-        .doc(user!.uid)
-        .collection('grocery')
-        .doc(docId)
-        .delete();
-  }
-
   Future<void> logout() {
     final signout = FirebaseAuth.instance.signOut();
     return signout;
@@ -61,7 +40,6 @@ class ProductService {
 class UserService {
   final _user = FirebaseAuth.instance.currentUser;
   final FirebaseFirestore db = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   Future<void> addUser(
     String name,
@@ -90,15 +68,15 @@ class UserService {
   }
 
   Future<bool> requestPermissions() async {
+    Permission.camera.request();
+    Permission.manageExternalStorage.request();
     final statusCamera = await Permission.camera.status;
     final statusStorage = await Permission.manageExternalStorage.status;
 
     if (!statusCamera.isGranted || !statusStorage.isGranted) {
-      final camResult = await Permission.camera.request();
-      final storResult = await Permission.camera.request();
-      if (!camResult.isGranted || !storResult.isGranted) {
-        return false;
-      }
+      print(statusCamera);
+      print(statusStorage);
+      return false;
     }
     return true;
   }
@@ -109,7 +87,10 @@ class UserService {
     // Check permissions
     final statusCamera = await Permission.camera.status;
     final statusStorage = await Permission.manageExternalStorage.status;
+    requestPermissions();
 
+    print(statusCamera);
+    print(statusStorage);
     if (statusCamera.isGranted && statusStorage.isGranted) {
       final imagePicked = await _picker.pickImage(source: ImageSource.gallery);
       if (imagePicked != null) {
@@ -117,8 +98,6 @@ class UserService {
         String downloadUrl = await uploadImageAndGetUrl(imagePicked);
         return downloadUrl;
       }
-    } else {
-      requestPermissions();
     }
     return null; // Return null if no image selected or permissions denied
   }
@@ -140,7 +119,9 @@ class UserService {
   }
 
   Future<Widget> loadProfileImage(uid) async {
-    String? imageUrl = await loadAndDisplayImage(uid);
+    String imageUrl = await loadAndDisplayImage(uid);
+
+    auth.currentUser!.updatePhotoURL(imageUrl);
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return Image.network(
         imageUrl,
@@ -154,7 +135,7 @@ class UserService {
     }
   }
 
-  Future<String?> loadAndDisplayImage(uid) async {
+  Future<String> loadAndDisplayImage(uid) async {
     // Fetch user document from Firestore
     DocumentSnapshot userDoc = await FirebaseFirestore.instance
         .collection('users') // your collection name
@@ -168,6 +149,61 @@ class UserService {
       String imageUrl = '';
       return imageUrl;
     }
+  }
+}
+
+class UploadDocument {
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  // Add Item
+  Future<void> addListing(
+    String category,
+    String imagePath,
+    String location,
+    String name,
+    String price,
+    String description,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final String productId = uuid.v4();
+    String imageUrl = await uploadImageAndGetUrl(imagePath, productId);
+
+    await _db.collection('products').doc(productId).set({
+      "category": category,
+      "createdAt": FieldValue.serverTimestamp(),
+      "imageUrl": imageUrl,
+      "location": location,
+      "name": name,
+      "ownerId": user.uid,
+      "price": price,
+      "description": description,
+    });
+  }
+
+  // Helper method to upload image and get the download URL
+  Future<String> uploadImageAndGetUrl(
+    String imagePath,
+    String productId,
+  ) async {
+    final File file = File(imagePath);
+    String fileName = basename(imagePath);
+    Reference ref = _storage.ref('products/$productId/$fileName');
+
+    try {
+      UploadTask uploadTask = ref.putFile(file);
+      TaskSnapshot snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      print('Upload error: $e');
+      rethrow;
+    }
+  }
+
+  // Delete item
+  Future<void> deleteListing(String docId) async {
+    await _db.collection('products').doc(docId).snapshots();
   }
 }
 

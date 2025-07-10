@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'SoByMarket',
       theme: ThemeData(
         textTheme: GoogleFonts.robotoTextTheme(Theme.of(context).textTheme),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
@@ -49,11 +49,11 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
           centerTitle: true,
-          titleTextStyle: TextStyle(fontSize: 18, color: Colors.black),
+          titleTextStyle: TextStyle(fontSize: 19, color: Colors.black),
         ),
       ),
       routes: kIsWeb ? WebRouter.webroutes : AppRouter.approutes,
-      initialRoute: kIsWeb ? WebRouter.login : AppRouter.authgate,
+      initialRoute: kIsWeb ? WebRouter.login : AppRouter.getstarted,
     );
   }
 }

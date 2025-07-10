@@ -46,6 +46,7 @@ class _ProductScreenState extends State<ProductScreen> {
         ModalRoute.of(context)!.settings.arguments as QueryDocumentSnapshot;
 
     final dynamic imageUrlField = product['imageUrl'];
+    print(imageUrlField);
 
     List<String> productImages;
 
@@ -55,6 +56,7 @@ class _ProductScreenState extends State<ProductScreen> {
     } else if (imageUrlField is String) {
       // It's a single string, make it a list
       productImages = [imageUrlField];
+      print(imageUrlField);
     } else {
       // Fallback: empty list or handle error
       productImages = [];
@@ -62,7 +64,7 @@ class _ProductScreenState extends State<ProductScreen> {
     String productLink =
         "https://yardify-web-react.vercel.app/productpage/${product.id}";
 
-    shareable() async {
+    void shareable() async {
       try {
         final result = await Share.share(
           "Check out this item on SoByMarket $productLink",
@@ -113,6 +115,11 @@ class _ProductScreenState extends State<ProductScreen> {
                               child: Image.network(
                                 productImages[index],
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(
+                                    Icons.image_not_supported_outlined,
+                                  );
+                                },
                               ),
                             ),
                           );

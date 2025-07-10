@@ -1,9 +1,16 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:feather_icons/feather_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:yardify/mobile/database/check_internet.dart';
 import 'package:yardify/mobile/database/item_list.dart';
 import 'package:yardify/mobile/screens/product/dis_product_card.dart';
 import 'package:yardify/routes.dart';
+import 'package:yardify/widgets/constant.dart';
+import 'package:yardify/widgets/loading.dart';
 
 class MobileDiscover extends StatefulWidget {
   const MobileDiscover({super.key});
@@ -16,23 +23,51 @@ bool isFavorite = false;
 final SearchController searchController = SearchController();
 
 class _MobileDiscoverState extends State<MobileDiscover> {
+  final CheckInternet checkInternet = CheckInternet();
+  late final Connectivity _connectivity;
+  late final StreamSubscription<List<ConnectivityResult>>
+  _connectivitySubscription;
+  bool isConnected = true;
+  List<ConnectivityResult> _connectionStatus = [ConnectivityResult.none];
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    UserService().requestPermissions();
-  }
-    Future<void> _refreshPage() async {
-    // Implement your reload logic here, e.g., fetch data again
-    // For demonstration, just wait a moment
-    await Future.delayed(Duration(seconds: 2));
-    setState(() {
-      // Update your data here to refresh the page
+    _connectivity = Connectivity();
+    checkInternet.checkInitialConnectivity(_connectivity, context);
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      result,
+    ) {
+      checkInternet.updateConnectionStatus(result, context);
+      setState(() {
+        _connectionStatus = result;
+        hasConnection(_connectionStatus);
+      });
     });
+  }
+
+
+  @override
+  void dispose() {
+    _connectivitySubscription.cancel();
+    super.dispose();
+  }
+
+  void hasConnection(List<ConnectivityResult> result) {
+    if (result.contains(ConnectivityResult.wifi)) {
+      setState(() {
+        isConnected = true;
+      });
+    } else {
+      isConnected = false;
+    }
+    print(_connectionStatus);
+    print("connection status: $isConnected");
   }
 
   @override
   Widget build(BuildContext context) {
+    SizeConfig.init(context);
     final itemList = ProductService().getItems();
     final adsList = ProductService().getAds();
     //this might cause the screens to not load properly
@@ -44,22 +79,19 @@ class _MobileDiscoverState extends State<MobileDiscover> {
           items = snapshot.data!.docs;
         }
         return Scaffold(
-          body: RefreshIndicator(
-            onRefresh: _refreshPage,
-            child: SafeArea(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      buildHeader(),
-                      buildSearchBar(items, snapshot),
-                      SizedBox(height: 8),
-                      SizedBox(height: 220, child: buildStreamAds(adsList)),
-                      buildStreamList(categories, itemList),
-                    ],
-                  ),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildHeader(),
+                    buildSearchBar(items, snapshot),
+                    SizedBox(height: 8),
+                    SizedBox(height: 220, child: buildStreamAds(adsList)),
+                    buildStreamList(categories, itemList),
+                  ],
                 ),
               ),
             ),
@@ -127,13 +159,24 @@ class _MobileDiscoverState extends State<MobileDiscover> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
-          onPressed: () {},
+          onPressed: () {
+            print(isConnected);
+          },
           icon: Icon(Icons.notifications_outlined, size: 30),
         ),
-        Text(
-          "Discover",
-          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, ),
-        ),
+        isConnected
+            ? Text(
+                "Discover",
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+              )
+            : Shimmer.fromColors(
+                baseColor: Colors.grey.shade400,
+                highlightColor: Colors.grey.shade200,
+                child: Text(
+                  "Discover",
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                ),
+              ),
         IconButton(
           onPressed: () {},
           icon: Icon(FeatherIcons.messageCircle, size: 30),
@@ -143,33 +186,48 @@ class _MobileDiscoverState extends State<MobileDiscover> {
   }
 
   Widget buildStreamAds(Stream<QuerySnapshot<Object?>> adsList) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double containerWidth = (screenWidth < 600)
+        ? screenWidth * 0.9
+        : screenWidth * 0.5;
     return StreamBuilder(
       stream: adsList,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Shimmer.fromColors(
+            baseColor: Colors.grey.shade300,
+            highlightColor: Colors.grey.shade400,
+            child: Container(
+              height: 200,
+              width: containerWidth,
+              margin: EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          );
         } else if (snapshot.hasError) {
           return Center(child: Text("Error: ${snapshot.error}"));
         } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(child: Text("No ads found"));
         }
         final ads = snapshot.data!.docs;
-        final width = MediaQuery.of(context).size.width;
         return ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: ads.length,
           itemBuilder: (context, index) {
             final ad = ads[index];
-            return buildAdCard(width, ad);
+            return buildAdCard(ad);
           },
         );
       },
     );
   }
 
-  Widget buildAdCard(double width, QueryDocumentSnapshot<Object?> ad) {
+  Widget buildAdCard(QueryDocumentSnapshot<Object?> ad) {
     double screenWidth = MediaQuery.of(context).size.width;
-    double containerWidth = (screenWidth <= 600 && screenWidth >= 1024)
+    double containerWidth = (screenWidth < 600)
         ? screenWidth * 0.9
         : screenWidth * 0.5;
     return Card(
@@ -188,6 +246,7 @@ class _MobileDiscoverState extends State<MobileDiscover> {
           ],
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             SizedBox(
               width: containerWidth * 0.5,
@@ -224,7 +283,18 @@ class _MobileDiscoverState extends State<MobileDiscover> {
               width: containerWidth * 0.4,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                return Icon(Icons.error, color: Colors.red);
+                return Icon(
+                  Icons.image_not_supported_outlined,
+                  color: Colors.grey,
+                  size: containerWidth * 0.4,
+                );
+              },
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) {
+                  return child;
+                } else {
+                  return LoadingScreen(color: Colors.black);
+                }
               },
             ),
           ],
@@ -278,7 +348,11 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                 stream: itemList,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 5, // number of placeholders
+                      itemBuilder: (context, index) => buildShimmerCard(),
+                    );
                   } else if (snapshot.hasError) {
                     return Center(child: Text("Error: ${snapshot.error}"));
                   } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -310,6 +384,65 @@ class _MobileDiscoverState extends State<MobileDiscover> {
           ],
         );
       }).toList(),
+    );
+  }
+
+  Widget buildShimmerCard() {
+    return Container(
+      width: 220,
+      height: 300,
+      margin: EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Shimmer.fromColors(
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade400,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Shimmer.fromColors(
+                  baseColor: Colors.grey.shade100,
+                  highlightColor: Colors.grey.shade200,
+                  child: Container(
+                    height: 16,
+                    width: double.infinity,
+                    color: Colors.grey,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Shimmer.fromColors(
+                  baseColor: Colors.grey.shade200,
+                  highlightColor: Colors.grey.shade300,
+                  child: Container(height: 16, width: 80, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:yardify/routes.dart';
+import 'package:yardify/widgets/loading.dart';
 
 class ProfileImageWidget extends StatefulWidget {
   final String userId; // pass the user ID to fetch data
@@ -11,7 +13,8 @@ class ProfileImageWidget extends StatefulWidget {
 }
 
 class _ProfileImageWidgetState extends State<ProfileImageWidget> {
-  Widget _imageWidget = CircularProgressIndicator();
+  // ignore: unused_field
+  Widget _imageWidget = LoadingScreen(color: Colors.white);
 
   @override
   void initState() {
@@ -20,18 +23,12 @@ class _ProfileImageWidgetState extends State<ProfileImageWidget> {
   }
 
   void loadAndDisplayImage() async {
-    // Fetch user document from Firestore
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance
-        .collection('users') // your collection name
-        .doc(widget.userId)
-        .get();
-
-    if (userDoc.exists && userDoc['profilePic'] != null) {
-      String imageUrl = userDoc['profilePic'];
+    if (auth.currentUser!.photoURL != null) {
+      String imageTwo = auth.currentUser!.photoURL!;
       setState(() {
         _imageWidget = ClipOval(
           child: Image.network(
-            imageUrl,
+            imageTwo,
             fit: BoxFit.cover,
             width: 100,
             height: 100,
@@ -46,13 +43,47 @@ class _ProfileImageWidgetState extends State<ProfileImageWidget> {
     }
   }
 
+  final userId = auth.currentUser!.uid;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(shape: BoxShape.circle),
-      width: 100,
-      height: 100,
-      child: _imageWidget,
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SizedBox(
+            width: 100,
+            height: 100,
+            child: Center(child: LoadingScreen(color: Colors.white)),
+          );
+        }
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          // Handle error or missing data
+          return SizedBox(width: 100, height: 100, child: Icon(Icons.person));
+        }
+
+        final userData = snapshot.data!.data() as Map<String, dynamic>;
+        final profileImageUrl = userData['profilePic'];
+
+        if (profileImageUrl == null || profileImageUrl.isEmpty) {
+          return SizedBox(width: 100, height: 100, child: Icon(Icons.person));
+        }
+
+        return Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            image: DecorationImage(
+              image: NetworkImage(profileImageUrl),
+              fit: BoxFit.cover,
+            ),
+          ),
+        );
+      },
     );
   }
 }

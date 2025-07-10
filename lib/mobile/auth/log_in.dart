@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:yardify/mobile/auth/authCheck/auth_service.dart';
@@ -15,13 +16,12 @@ class MobileLogIn extends StatefulWidget {
   State<MobileLogIn> createState() => _MobileLogInState();
 }
 
-bool rememberMe = false;
-final _loginKey = GlobalKey<FormState>();
-final TextEditingController _emailController = TextEditingController();
-final TextEditingController _passwordController = TextEditingController();
-
 class _MobileLogInState extends State<MobileLogIn> {
+  bool rememberMe = false;
   bool isLogin = true;
+  final _loginKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   void login() async {
     final String email = _emailController.text.trim();
@@ -31,12 +31,12 @@ class _MobileLogInState extends State<MobileLogIn> {
       try {
         widget.auth.login(email, password);
         await PreferenceManager.saveBool(rememberMe);
-      } catch (e) {
+      } on FirebaseAuth catch (e) {
         displaySnackBar(context, "Login failed: $e");
         return;
       }
       // Navigate to the next screen after successful login
-      Navigator.pushReplacementNamed(context, AppRouter.mainlayout);
+      Navigator.pushReplacementNamed(context, AppRouter.authgate);
     }
   }
 
@@ -167,7 +167,7 @@ class _MobileLogInState extends State<MobileLogIn> {
                         onPressed: () {
                           Navigator.pushReplacementNamed(
                             context,
-                            AppRouter.mobilelogin,
+                            AppRouter.mobilesignup,
                           ); // Adjust the route as needed
                         },
                         child: Text("Sign Up"),

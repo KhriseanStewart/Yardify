@@ -17,14 +17,14 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-final GlobalKey<FormState> _key = GlobalKey();
-
-final TextEditingController _name = TextEditingController();
-final TextEditingController _userName = TextEditingController();
-final TextEditingController _email = TextEditingController();
-final TextEditingController _telephone = TextEditingController();
-
 class _ProfileScreenState extends State<ProfileScreen> {
+  final GlobalKey<FormState> _key = GlobalKey();
+  final TextEditingController _name = TextEditingController();
+  final TextEditingController _userName = TextEditingController();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _telephone = TextEditingController();
+
+  // ignore: unused_field
   Widget _profileImage = CircularProgressIndicator();
   final userService = UserService();
 
@@ -32,11 +32,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    loadAndDisplayImage();
+    if (auth.currentUser != null) {
+      loadAndDisplayImage(auth.currentUser!.uid);
+    }
+    userService.requestPermissions();
   }
 
-  Future<void> loadAndDisplayImage() async {
-    Widget image = await UserService().loadProfileImage(auth.currentUser!.uid);
+  Future<void> loadAndDisplayImage(String uid) async {
+    Widget image = await UserService().loadProfileImage(uid);
     setState(() {
       _profileImage = image;
     });
@@ -45,7 +48,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<String?> updateProfilePicture() async {
     String? imageUrl = await userService.addProfilePic();
     if (imageUrl != null) {
-      // Save the URL in Firestore or do whatever you need
       try {
         await userService.updateProfilePic(auth.currentUser!.uid, imageUrl);
       } catch (e) {
@@ -53,8 +55,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       print('Profile picture uploaded: $imageUrl');
       return imageUrl;
+    } else {
+      imageUrl = '';
+      try {
+        await userService.updateProfilePic(auth.currentUser!.uid, imageUrl);
+      } catch (e) {
+        print(e);
+        return null;
+      }
+      return imageUrl;
     }
-    return null;
   }
 
   @override
@@ -71,10 +81,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
         try {
           await UserService().addUser(name, userName, formemail, telephone);
+          Navigator.pushReplacementNamed(context, AppRouter.authgate);
         } catch (e) {
           displaySnackBar(context, "Error Happened");
-        } finally {
-          Navigator.pushReplacementNamed(context, AppRouter.mainlayout);
         }
       }
     }
@@ -132,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(300),
-                          child: _profileImage,
+                          child: ProfileImageWidget(),
                         ),
                       ),
                     ),
@@ -224,7 +233,6 @@ class ProfileImageWidget extends StatefulWidget {
 }
 
 class _ProfileImageWidgetState extends State<ProfileImageWidget> {
-
   @override
   void initState() {
     super.initState();
@@ -244,7 +252,7 @@ class _ProfileImageWidgetState extends State<ProfileImageWidget> {
           return Container(
             width: 100,
             height: 100,
-            child: Center(child: CircularProgressIndicator(),)
+            child: Center(child: CircularProgressIndicator()),
           );
         }
         if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
@@ -255,9 +263,11 @@ class _ProfileImageWidgetState extends State<ProfileImageWidget> {
         final userData = snapshot.data!.data() as Map<String, dynamic>;
         final profileImageUrl = userData['profilePic'];
 
-        if (profileImageUrl.isEmpty) {
+        if (profileImageUrl == null || profileImageUrl.isEmpty) {
           return Container(width: 100, height: 100, child: Icon(Icons.person));
         }
+        
+        final imageUrl = auth.currentUser!.photoURL;
 
         return Container(
           width: 100,
@@ -265,7 +275,7 @@ class _ProfileImageWidgetState extends State<ProfileImageWidget> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             image: DecorationImage(
-              image: NetworkImage(profileImageUrl),
+              image: NetworkImage(imageUrl!),
               fit: BoxFit.cover,
             ),
           ),
