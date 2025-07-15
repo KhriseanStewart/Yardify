@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class ProfileRow extends StatefulWidget {
   final String productId; // pass the product ID
 
-  const ProfileRow({required this.productId, Key? key}) : super(key: key);
+  const ProfileRow({required this.productId, super.key});
 
   @override
   _ProfileRowState createState() => _ProfileRowState();
@@ -40,6 +42,24 @@ class _ProfileRowState extends State<ProfileRow> {
         final productData = snapshot.data!.data() as Map<String, dynamic>;
         final userUID = productData['ownerId'];
 
+        String getTimeAgo(DateTime dateTime) {
+          final now = DateTime.now();
+          final difference = now.difference(dateTime);
+
+          if (difference.inDays > 7) {
+            // After 1 week, show formatted date
+            return DateFormat('MMM dd, yyyy').format(dateTime);
+          } else {
+            // Within a week, show "x days ago", etc.
+            return timeago.format(dateTime);
+          }
+        }
+
+        Timestamp timestamp = productData['createdAt'];
+        DateTime dateTime = timestamp.toDate();
+
+        String displayTime = getTimeAgo(dateTime);
+
         // Now fetch the user data
         return FutureBuilder<DocumentSnapshot>(
           future: FirebaseFirestore.instance
@@ -66,7 +86,6 @@ class _ProfileRowState extends State<ProfileRow> {
 
             final userData = userSnapshot.data!.data() as Map<String, dynamic>;
             final name = userData['name'];
-            final tnumber = userData['telephone'];
 
             return Container(
               margin: EdgeInsets.symmetric(horizontal: 3.0),
@@ -88,10 +107,17 @@ class _ProfileRowState extends State<ProfileRow> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(30),
                         ),
-                        child: Icon(
-                          Icons.person,
-                          size: 40,
-                          color: Colors.grey.shade600,
+                        child: ClipOval(
+                          child:
+                              userData['profilePic'] != null &&
+                                  userData['profilePic'].toString().isNotEmpty
+                              ? Image.network(
+                                  userData['profilePic'],
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                )
+                              : Icon(Icons.person, size: 40),
                         ),
                       ),
                       SizedBox(width: 8),
@@ -106,7 +132,7 @@ class _ProfileRowState extends State<ProfileRow> {
                             ),
                           ),
                           Text(
-                            tnumber?.toString() ?? 'N/A',
+                            "$displayTime",
                             style: TextStyle(
                               fontWeight: FontWeight.w400,
                               fontSize: 14,

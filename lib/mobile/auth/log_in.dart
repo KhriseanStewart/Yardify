@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -29,12 +31,23 @@ class _MobileLogInState extends State<MobileLogIn> {
 
     if (_loginKey.currentState?.validate() ?? false) {
       try {
-        widget.auth.login(email, password);
+        final auth = await widget.auth.login(email, password);
+        if (auth == null) {
+          displaySnackBar(
+            context,
+            "Incorrect email or password",
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+          return;
+        }
+
         await PreferenceManager.saveBool(rememberMe);
       } on FirebaseAuth catch (e) {
         displaySnackBar(context, "Login failed: $e");
         return;
       }
+      if (!mounted) return;
       // Navigate to the next screen after successful login
       Navigator.pushReplacementNamed(context, AppRouter.authgate);
     }
@@ -136,21 +149,21 @@ class _MobileLogInState extends State<MobileLogIn> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     spacing: 30,
                     children: [
-                      LogInWithThirdParty(
+                      logInWithThirdParty(
                         Icon(
                           FontAwesomeIcons.google,
                           color: Colors.red,
                           size: 30,
                         ),
                       ),
-                      LogInWithThirdParty(
+                      logInWithThirdParty(
                         Icon(
                           FontAwesomeIcons.facebook,
                           color: Colors.lightBlueAccent,
                           size: 30,
                         ),
                       ),
-                      LogInWithThirdParty(
+                      logInWithThirdParty(
                         Icon(
                           FontAwesomeIcons.apple,
                           color: Colors.black,
@@ -183,7 +196,7 @@ class _MobileLogInState extends State<MobileLogIn> {
     );
   }
 
-  Widget LogInWithThirdParty(Icon icon) {
+  Widget logInWithThirdParty(Icon icon) {
     return GestureDetector(
       onTap: () {
         // Handle Google sign-in

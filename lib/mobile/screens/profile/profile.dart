@@ -89,9 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         title: Text(widget.title!),
         centerTitle: widget.signup == true ? false : true,
         leading: widget.signup == false
@@ -264,10 +262,8 @@ class _ProfileImageWidgetState extends State<ProfileImageWidget> {
         final profileImageUrl = userData['profilePic'];
 
         if (profileImageUrl == null || profileImageUrl.isEmpty) {
-          return Container(width: 100, height: 100, child: Icon(Icons.person));
+          return SizedBox(width: 100, height: 100, child: Icon(Icons.person));
         }
-        
-        final imageUrl = auth.currentUser!.photoURL;
 
         return Container(
           width: 100,
@@ -275,7 +271,7 @@ class _ProfileImageWidgetState extends State<ProfileImageWidget> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             image: DecorationImage(
-              image: NetworkImage(imageUrl!),
+              image: NetworkImage(profileImageUrl!),
               fit: BoxFit.cover,
             ),
           ),

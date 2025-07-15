@@ -4,8 +4,7 @@ import 'package:yardify/mobile/database/item_list.dart';
 class CategoryAutocomplete extends StatefulWidget {
   final Function(String?) onCategorySelected;
 
-  const CategoryAutocomplete({Key? key, required this.onCategorySelected})
-    : super(key: key);
+  const CategoryAutocomplete({super.key, required this.onCategorySelected});
 
   @override
   _CategoryAutocompleteState createState() => _CategoryAutocompleteState();

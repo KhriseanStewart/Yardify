@@ -2,9 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:yardify/firebase_options.dart';
+import 'package:yardify/mobile/database/shared_preference.dart';
 import 'package:yardify/routes.dart';
+import 'package:yardify/widgets/theme_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,26 +33,38 @@ void main() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isDarkMode = false;
   // This widget is the root of your application.
+
+  @override
+  void initState() {
+    super.initState();
+    loadThemePreference();
+  }
+
+  void loadThemePreference() async {
+    bool value = await IsDarkTheme.getBool();
+    setState(() {
+      isDarkMode = value;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SoByMarket',
-      theme: ThemeData(
-        textTheme: GoogleFonts.robotoTextTheme(Theme.of(context).textTheme),
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          centerTitle: true,
-          titleTextStyle: TextStyle(fontSize: 19, color: Colors.black),
-        ),
-      ),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       routes: kIsWeb ? WebRouter.webroutes : AppRouter.approutes,
       initialRoute: kIsWeb ? WebRouter.login : AppRouter.getstarted,
     );

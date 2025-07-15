@@ -87,7 +87,9 @@ class _ProductScreenState extends State<ProductScreen> {
           icon: Icon(Icons.close),
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(FeatherIcons.search)),
+          IconButton(onPressed: () {
+            displaySnackBar(context, "Coming soon");
+          }, icon: Icon(FeatherIcons.search)),
         ],
       ),
       body: Stack(
@@ -131,9 +133,13 @@ class _ProductScreenState extends State<ProductScreen> {
                       right: 4,
                       child: IconButton(
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.transparent,
+                          backgroundColor: Colors.grey.shade800,
                         ),
-                        icon: Icon(Icons.share_rounded, size: 24),
+                        icon: Icon(
+                          Icons.share_rounded,
+                          size: 24,
+                          color: Colors.white,
+                        ),
                         onPressed: () {
                           shareable();
                         },
@@ -149,46 +155,54 @@ class _ProductScreenState extends State<ProductScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    spacing: 6,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        product['name'],
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        "JMD ${product['price']}",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      Row(
-                        spacing: 4,
+                      Column(
+                        spacing: 6,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.location_on_outlined),
                           Text(
-                            product['location'],
+                            product['name'],
                             style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            "JMD ${product['price']}",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ],
                       ),
+                      Text("Used (no data added)"),
                     ],
                   ),
                 ),
+                Divider(),
+                //TODO: add this somewhere else
+                // Row(
+                //   spacing: 4,
+                //   children: [
+                //     Icon(Icons.location_on_outlined),
+                //     Text(
+                //       product['location'],
+                //       style: TextStyle(
+                //         fontSize: 15,
+                //         fontWeight: FontWeight.w500,
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 ProfileRow(productId: product.id),
                 SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+                    product['description'],
                     style: TextStyle(fontSize: 16),
                   ),
                 ),

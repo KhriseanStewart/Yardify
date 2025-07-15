@@ -122,6 +122,7 @@ class UserService {
     String imageUrl = await loadAndDisplayImage(uid);
 
     auth.currentUser!.updatePhotoURL(imageUrl);
+    // ignore: unnecessary_null_comparison
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return Image.network(
         imageUrl,
@@ -161,7 +162,7 @@ class UploadDocument {
     String imagePath,
     String location,
     String name,
-    String price,
+    int price,
     String description,
   ) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -179,6 +180,7 @@ class UploadDocument {
       "ownerId": user.uid,
       "price": price,
       "description": description,
+      "productId": productId
     });
   }
 
@@ -204,6 +206,43 @@ class UploadDocument {
   // Delete item
   Future<void> deleteListing(String docId) async {
     await _db.collection('products').doc(docId).snapshots();
+  }
+}
+
+class Permissions {
+  Future<bool> requestPerms() async {
+    final locationStatus = await Permission.location.status;
+    final storageStatus = await Permission.manageExternalStorage.status;
+    final cameraStatus = await Permission.camera.status;
+    final notiStatus = await Permission.notification.status;
+
+    // Request location permission if not granted
+    if (!locationStatus.isGranted) {
+      await Permission.location.request();
+    }
+
+    // Request storage permission if not granted
+    if (!storageStatus.isGranted) {
+      await Permission.manageExternalStorage.request();
+    }
+
+    // Request camera permission if not granted
+    if (!cameraStatus.isGranted) {
+      await Permission.camera.request();
+    }
+
+    // Request notification permission if not granted (Android 13+)
+    if (!notiStatus.isGranted) {
+      await Permission.notification.request();
+    }
+
+    // Optional: You can check again the status after requesting
+    final newNotiStatus = await Permission.notification.status;
+
+    print('Notification permission status: $newNotiStatus');
+
+    // Return true if notification permission is granted
+    return newNotiStatus.isGranted;
   }
 }
 

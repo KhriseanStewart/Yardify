@@ -14,7 +14,7 @@ class DemoProfileRow extends StatelessWidget {
           .get(),
       builder: (context, userSnapshot) {
         if (userSnapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator( color: Theme.of(context).primaryColorLight,));
         }
         if (userSnapshot.hasError) {
           return Center(child: Text('Error: ${userSnapshot.error}'));
@@ -117,7 +117,7 @@ class _ProfileImageWidgetState extends State<ProfileImageWidget> {
           return SizedBox(
             width: 100,
             height: 100,
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColorLight,)),
           );
         }
         if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {

@@ -10,15 +10,15 @@ class ProfileTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         title: Text("Edit Profile"),
         centerTitle: true,
         actions: [
           IconButton(
             tooltip: 'Log out',
-            style: IconButton.styleFrom(foregroundColor: Colors.black),
+            style: IconButton.styleFrom(
+              foregroundColor: Theme.of(context).primaryColorLight,
+            ),
             onPressed: () {
               ProductService().logout();
               Navigator.pushReplacementNamed(context, AppRouter.authgate);
@@ -70,8 +70,19 @@ class ProfileTabs extends StatelessWidget {
                       onTap: () {
                         Navigator.pushNamed(context, AppRouter.mobiledashboard);
                       },
-                      title: Text("Sellers Dashboard"),
-                      subtitle: Text("Start selling your Items Today!"),
+                      title: Text(
+                        "Sellers Dashboard",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.labelMedium?.color,
+                        ),
+                      ),
+                      subtitle: Text(
+                        "Start selling your Items Today!",
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.labelMedium?.color,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -86,8 +97,18 @@ class ProfileTabs extends StatelessWidget {
                       onTap: () {
                         //move to Ads Dashboard
                       },
-                      title: Text("Post Ads"),
-                      subtitle: Text("Get your items seen with our Ads"),
+                      title: Text(
+                        "Post Ads",
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.labelMedium?.color,
+                        ),
+                      ),
+                      subtitle: Text(
+                        "Get your items seen with our Ads",
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.labelMedium?.color,
+                        ),
+                      ),
                     ),
                   ),
                 ),

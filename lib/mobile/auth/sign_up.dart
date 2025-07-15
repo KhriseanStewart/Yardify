@@ -29,7 +29,6 @@ class _MobileSignUpState extends State<MobileSignUp> {
     if (_signUpKey.currentState?.validate() ?? false) {
       setState(() {
         isLoading = true;
-        print(isLoading);
       });
       final String email = _emailController.text.trim();
       final String password = _passwordController.text.trim();
@@ -39,7 +38,6 @@ class _MobileSignUpState extends State<MobileSignUp> {
         displaySnackBar(context, "Passwords do not match");
         setState(() {
           isLoading = false;
-          print(isLoading);
         });
         return;
       } else {
@@ -61,7 +59,6 @@ class _MobileSignUpState extends State<MobileSignUp> {
         } finally {
           setState(() {
             isLoading = false;
-            print(isLoading);
           });
           // Clear the text fields after submission
           _emailController.clear();
@@ -145,21 +142,21 @@ class _MobileSignUpState extends State<MobileSignUp> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   spacing: 30,
                   children: [
-                    LogInWithThirdParty(
+                    logInWithThirdParty(
                       Icon(
                         FontAwesomeIcons.google,
                         color: Colors.red,
                         size: 30,
                       ),
                     ),
-                    LogInWithThirdParty(
+                    logInWithThirdParty(
                       Icon(
                         FontAwesomeIcons.facebook,
                         color: Colors.lightBlueAccent,
                         size: 30,
                       ),
                     ),
-                    LogInWithThirdParty(
+                    logInWithThirdParty(
                       Icon(
                         FontAwesomeIcons.apple,
                         color: Colors.black,
@@ -191,7 +188,7 @@ class _MobileSignUpState extends State<MobileSignUp> {
     );
   }
 
-  Widget LogInWithThirdParty(Icon icon) {
+  Widget logInWithThirdParty(Icon icon) {
     return GestureDetector(
       onTap: () {
         // Handle Google sign-in

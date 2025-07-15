@@ -19,13 +19,12 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  List<ConnectivityResult> _connectionStatus = [ConnectivityResult.none];
+  List<ConnectivityResult> connectionStatus = [ConnectivityResult.none];
   final Connectivity _connectivity = Connectivity();
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     CheckInternet().checkInitialConnectivity(_connectivity, context);
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
@@ -40,7 +39,6 @@ class _AuthGateState extends State<AuthGate> {
   @override
   void dispose() {
     _connectivitySubscription.cancel();
-    // TODO: implement dispose
     super.dispose();
   }
 
@@ -68,7 +66,11 @@ class _AuthGateState extends State<AuthGate> {
           stream: FirebaseAuth.instance.authStateChanges(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(
+                  color: Theme.of(context).primaryColorLight,
+                ),
+              );
             }
             //if logged in
             if (snapshot.hasData) {
@@ -97,7 +99,6 @@ class _AuthGateState extends State<AuthGate> {
                     for (var field in requiredFields) {
                       if (userData[field] == null ||
                           userData[field].toString().isEmpty) {
-                        print(field);
                         isProfileCompleted = false;
                         break;
                       }

@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:yardify/mobile/dashboard/sellers/demo_profile_row.dart';
 import 'package:yardify/mobile/database/item_list.dart';
 import 'package:yardify/routes.dart';
-import 'package:yardify/widgets/autoComplete.dart';
+import 'package:yardify/widgets/auto_complete.dart';
 import 'package:yardify/widgets/constant.dart';
 
 class CreateListing extends StatefulWidget {
@@ -48,7 +48,7 @@ class _CreateListingState extends State<CreateListing> {
         future: image(), // your async function
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator(); // or a placeholder widget
+            return CircularProgressIndicator(color: Theme.of(context).primaryColorLight,); // or a placeholder widget
           } else if (snapshot.hasError) {
             return Text('Error loading image');
           } else {
@@ -127,12 +127,13 @@ class _CreateListingState extends State<CreateListing> {
       final category = selectedcategoryEditor.text;
       final location = locationEditor.text;
       try {
+        int priceInt = int.parse(price);
         await UploadDocument().addListing(
           category,
           imageUrl!,
           location,
           name,
-          price,
+          priceInt,
           description,
         );
         setState(() {

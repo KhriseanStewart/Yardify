@@ -20,18 +20,23 @@ class GetStarted extends StatefulWidget {
 class _GetStartedState extends State<GetStarted> {
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     UserService().requestPermissions();
+    _checkPermissions();
     checkRememberMe();
+  }
+
+  void _checkPermissions() async {
+    bool permsGranted = await Permissions().requestPerms();
+    if (permsGranted) {
+      
+    }
   }
 
   void checkRememberMe() async {
     final data = await PreferenceManager.getBool();
-    print(data);
     if (data != null && data == true) {
       final user = widget.auth.currentUser;
-      print(user);
       if (user != null) {
         checkUserDocument(user.uid);
       }

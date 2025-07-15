@@ -11,6 +11,7 @@ import 'package:yardify/mobile/screens/product/dis_product_card.dart';
 import 'package:yardify/routes.dart';
 import 'package:yardify/widgets/constant.dart';
 import 'package:yardify/widgets/loading.dart';
+import 'package:yardify/widgets/snack_bar.dart';
 
 class MobileDiscover extends StatefulWidget {
   const MobileDiscover({super.key});
@@ -45,7 +46,6 @@ class _MobileDiscoverState extends State<MobileDiscover> {
       });
     });
   }
-
 
   @override
   void dispose() {
@@ -114,7 +114,9 @@ class _MobileDiscoverState extends State<MobileDiscover> {
       ),
       child: SearchAnchor.bar(
         barElevation: WidgetStatePropertyAll(0),
-        barBackgroundColor: WidgetStatePropertyAll(Colors.white),
+        barBackgroundColor: WidgetStatePropertyAll(
+          Theme.of(context).primaryColor,
+        ),
         barHintText: "Search",
         searchController: searchController,
         suggestionsBuilder: (context, controller) {
@@ -161,6 +163,7 @@ class _MobileDiscoverState extends State<MobileDiscover> {
         IconButton(
           onPressed: () {
             print(isConnected);
+            displaySnackBar(context, "Coming soon");
           },
           icon: Icon(Icons.notifications_outlined, size: 30),
         ),
@@ -178,7 +181,9 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                 ),
               ),
         IconButton(
-          onPressed: () {},
+          onPressed: () {
+            displaySnackBar(context, "Coming soon");
+          },
           icon: Icon(FeatherIcons.messageCircle, size: 30),
         ),
       ],
@@ -236,10 +241,10 @@ class _MobileDiscoverState extends State<MobileDiscover> {
         width: containerWidth,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: Colors.white,
+          color: Theme.of(context).primaryColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.shade300,
+              color: Theme.of(context).shadowColor,
               blurRadius: 5,
               offset: Offset(0, 2),
             ),
@@ -263,7 +268,7 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                        color: Theme.of(context).primaryColorLight,
                       ),
                     ),
                     Text(
@@ -271,7 +276,7 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                       textAlign: TextAlign.start,
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey.shade700,
+                        color: Theme.of(context).primaryColorLight,
                       ),
                     ),
                   ],
@@ -320,7 +325,11 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                 children: [
                   Text(
                     cat,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColorLight,
+                    ),
                   ),
                   TextButton(
                     onPressed: () {
@@ -335,7 +344,7 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w300,
-                        color: Colors.black,
+                        color: Theme.of(context).primaryColorLight,
                       ),
                     ),
                   ),
@@ -375,7 +384,7 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       final item = items[index];
-                      return ProductCard(item: item);
+                      return ProductCard(item: item, variant: 'dis');
                     },
                   );
                 },
