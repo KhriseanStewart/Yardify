@@ -2,6 +2,10 @@
 
 A Flutter project developed by SoByteTech (Khrisean stewart)
 
+## What is this?
+
+Well Yardify or SoByteShop is Marketplace application where people.... where users can post there items for sale (theses items can get filtered) and receive messenges from other users who are interested in the product. In figsight its basically the same as Facebook Marketplace but what this app offers is a future. One where users can send there product to our warehouse and get a verified post. With a verified post, users from all over the parish can BUY the item (no more messenging) and it will be shipped to them in couple days.
+
 ## Getting Started
 
 We'll start with the MVP features
