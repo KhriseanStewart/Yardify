@@ -16,12 +16,7 @@ class MainLayout extends StatefulWidget {
 int badgeCount = 0;
 List<Widget> _screens = [MobileDiscover(), FavoriteScreen(), ProfileTabs()];
 bool showBage = true;
-void checkBadge() {}
 int _currentIndex = 0;
-
-void badgetext() {
-  FavoriteData().readFav(auth.currentUser!.uid);
-}
 
 class _MainLayoutState extends State<MainLayout> {
   @override

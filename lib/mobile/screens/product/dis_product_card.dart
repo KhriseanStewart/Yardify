@@ -1,5 +1,5 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
@@ -38,7 +38,6 @@ class _ProductCardState extends State<ProductCard> {
     setState(() {
       isFavorite = value;
     });
-    print("Item is $value");
   }
 
   @override
@@ -61,7 +60,6 @@ class _ProductCardState extends State<ProductCard> {
       }
     }
 
-    final auth = FirebaseAuth.instance.currentUser;
     final item = widget.item;
 
     final firebasePrice = item['price'];
@@ -83,80 +81,38 @@ class _ProductCardState extends State<ProductCard> {
                 borderRadius: BorderRadius.circular(8),
                 // color: Theme.of(context).primaryColor,
               ),
-              width: 220,
-              height: 300,
+              width: 200,
+              height: 220,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(8),
-                            topRight: Radius.circular(8),
-                          ),
-                          child: Image.network(
-                            item['imageUrl'] is List
-                                ? (item['imageUrl'].isNotEmpty
-                                      ? item['imageUrl'][0]
-                                      : '')
-                                : (item['imageUrl'] ?? ''),
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Center(
-                                  child: Icon(
-                                    Icons.image,
-                                    color: Colors.grey,
-                                    size: SizeConfig.widthPercentage(60),
-                                  ),
-                                ),
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) {
-                                return child;
-                              } else {
-                                return Shimmer.fromColors(
-                                  baseColor: Colors.grey.shade200,
-                                  highlightColor: Colors.grey.shade300,
-                                  child: Container(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    color: Colors.grey,
-                                  ),
-                                );
-                              }
-                            },
+                  SizedBox(
+                    height: 200,
+                    width: 200,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(8),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: item['imageUrl'] is List
+                            ? (item['imageUrl'].isNotEmpty
+                                  ? item['imageUrl'][0]
+                                  : '')
+                            : (item['imageUrl'] ?? ''),
+                        fit: BoxFit.cover,
+                        errorWidget: (context, error, stackTrace) => Center(
+                          child: Icon(
+                            Icons.image,
+                            color: Colors.grey,
+                            size: SizeConfig.widthPercentage(60),
                           ),
                         ),
-                        Positioned(
-                          top: 2,
-                          right: 2,
-                          child: IconButton(
-                            icon: isFavorite
-                                ? Icon(
-                                    Icons.favorite,
-                                    size: 30,
-                                    color: Colors.redAccent,
-                                  )
-                                : Icon(Icons.favorite_border, size: 30),
-                            onPressed: () {
-                              if (isFavorite) {
-                                FavoriteData().removeFromFav(
-                                  auth!.uid,
-                                  item['productId'],
-                                );
-                              }
-                              setState(() {
-                                isFavorite = !isFavorite;
-                                FavoriteData().addToFav(auth!.uid, item);
-                              });
-                              // Handle favorite action
-                            },
-                          ),
-                        ),
-                      ],
+                        progressIndicatorBuilder:
+                            (context, url, downloadProgress) =>
+                                Image.network(url, fit: BoxFit.cover),
+                      ),
                     ),
                   ),
                   Padding(
@@ -169,26 +125,44 @@ class _ProductCardState extends State<ProductCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Row(
+                          spacing: 4,
+                          children: [
+                            Text(
+                              "J\$ $price",
+                              textAlign: TextAlign.start,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).primaryColorLight,
+                              ),
+                            ),
+                            buildDotContainer(),
+                            Flexible(
+                              child: Text(
+                                item['name'] ?? '',
+                                textAlign: TextAlign.start,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Theme.of(context).primaryColorLight,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         Text(
-                          item['name'] ?? '',
+                          "${item['location']}",
                           textAlign: TextAlign.start,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w300,
-                            color: Theme.of(context).primaryColorLight,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          "JMD$price",
-                          textAlign: TextAlign.start,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
                             color: Theme.of(context).primaryColorLight,
                           ),
                         ),
@@ -313,5 +287,13 @@ class _ProductCardState extends State<ProductCard> {
               ),
             ),
           );
+  }
+
+  Container buildDotContainer() {
+    return Container(
+      width: 4,
+      height: 4,
+      decoration: BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+    );
   }
 }

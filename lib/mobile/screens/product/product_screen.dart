@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:feather_icons/feather_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:yardify/mobile/auth/authCheck/auth_service.dart';
+import 'package:yardify/mobile/database/messaging.dart';
 import 'package:yardify/mobile/screens/profile/ps_profile_card.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:yardify/routes.dart';
@@ -78,8 +80,14 @@ class _ProductScreenState extends State<ProductScreen> {
       }
     }
 
+    String chatId = MessagingService().getChatId(
+      auth.currentUser!.uid,
+      product['ownerId'],
+    );
+
     return Scaffold(
       appBar: AppBar(
+        title: Text("Item", style: TextStyle(fontWeight: FontWeight.bold)),
         leading: IconButton(
           onPressed: () {
             Navigator.pushReplacementNamed(context, AppRouter.mainlayout);
@@ -87,9 +95,18 @@ class _ProductScreenState extends State<ProductScreen> {
           icon: Icon(Icons.close),
         ),
         actions: [
-          IconButton(onPressed: () {
-            displaySnackBar(context, "Coming soon");
-          }, icon: Icon(FeatherIcons.search)),
+          IconButton(
+            onPressed: () {
+              displaySnackBar(context, "Coming soon");
+            },
+            icon: Icon(FeatherIcons.search),
+          ),
+          IconButton(
+            onPressed: () {
+              shareable();
+            },
+            icon: Icon(Icons.ios_share),
+          ),
         ],
       ),
       body: Stack(
@@ -114,10 +131,24 @@ class _ProductScreenState extends State<ProductScreen> {
                             scale: scale,
                             child: SizedBox(
                               width: double.infinity,
-                              child: Image.network(
-                                productImages[index],
+                              child: CachedNetworkImage(
+                                imageUrl: productImages[index],
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
+                                progressIndicatorBuilder:
+                                    (context, url, progress) {
+                                      return Image.network(
+                                        productImages[index],
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Icon(
+                                                Icons
+                                                    .image_not_supported_outlined,
+                                              );
+                                            },
+                                      );
+                                    },
+                                errorWidget: (context, url, error) {
                                   return Icon(
                                     Icons.image_not_supported_outlined,
                                   );
@@ -125,23 +156,6 @@ class _ProductScreenState extends State<ProductScreen> {
                               ),
                             ),
                           );
-                        },
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: IconButton(
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.grey.shade800,
-                        ),
-                        icon: Icon(
-                          Icons.share_rounded,
-                          size: 24,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          shareable();
                         },
                       ),
                     ),
@@ -165,45 +179,53 @@ class _ProductScreenState extends State<ProductScreen> {
                           Text(
                             product['name'],
                             style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            "JMD ${product['price']}",
-                            style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 22,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
+                          Row(
+                            children: [
+                              Icon(Icons.location_on_outlined),
+                              Text("${product['location']}"),
+                            ],
+                          ),
                         ],
                       ),
-                      Text("Used (no data added)"),
+                      Column(
+                        children: [
+                          Text(
+                            "J\$ ${product['price']}.00",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text("Unlisted"),
+                        ],
+                      ),
                     ],
                   ),
                 ),
                 Divider(),
-                //TODO: add this somewhere else
-                // Row(
-                //   spacing: 4,
-                //   children: [
-                //     Icon(Icons.location_on_outlined),
-                //     Text(
-                //       product['location'],
-                //       style: TextStyle(
-                //         fontSize: 15,
-                //         fontWeight: FontWeight.w500,
-                //       ),
-                //     ),
-                //   ],
-                // ),
                 ProfileRow(productId: product.id),
-                SizedBox(height: 10),
+                Divider(),
                 Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Text(
-                    product['description'],
-                    style: TextStyle(fontSize: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Description",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        product['description'],
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(height: 60),
@@ -223,11 +245,24 @@ class _ProductScreenState extends State<ProductScreen> {
                   Expanded(
                     child: CustomButton(
                       btntext: "Message Seller",
-                      bgcolor: Colors.white,
+                      bgcolor: Colors.grey.shade400,
                       textcolor: Colors.black,
                       isBoldtext: true,
                       size: 18,
                       borderRadius: 8,
+                      onpress: () async {
+                        await MessagingService().sendMessage(
+                          chatId,
+                          auth.currentUser!.uid,
+                          product['ownerId'],
+                          "I want this product",
+                        );
+                        await MessagingService().updateConversation(
+                          auth.currentUser!.uid,
+                          product['ownerId'],
+                          "I want this product",
+                        );
+                      },
                     ),
                   ),
                   Tooltip(

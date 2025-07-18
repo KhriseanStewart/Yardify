@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:yardify/mobile/database/location_data.dart';
 import 'package:yardify/mobile/database/shared_preference.dart';
 import 'package:yardify/routes.dart';
 import 'package:yardify/widgets/loading.dart';
@@ -13,12 +14,14 @@ class PreferenceScreen extends StatefulWidget {
 class _PreferenceScreenState extends State<PreferenceScreen> {
   bool? rememberMe;
   bool? themeColor;
+  bool? isLocationEnabled;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     getRememberMe();
     getThemeColor();
+    getlocation();
     print(auth.currentUser);
   }
 
@@ -26,6 +29,13 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
     bool? value = await PreferenceManager.getBool();
     setState(() {
       rememberMe = value ?? false; // default to false if null
+    });
+  }
+
+  Future<void> getlocation() async {
+    bool? value = await LocationPreference.getBool();
+    setState(() {
+      isLocationEnabled = value ?? false; // default to false if null
     });
   }
 
@@ -107,12 +117,17 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                     children: [
                       Text("Location"),
                       Switch(
-                        value: rememberMe!,
+                        value: isLocationEnabled!,
                         onChanged: (value) {
                           setState(() {
-                            rememberMe = value;
+                            isLocationEnabled = value;
+                            if (!value) {
+                              LocationData().stopLocationUpdates();
+                            } else {
+                              LocationData().startLocationUpdates();
+                            }
                           });
-                          PreferenceManager.saveBool(value);
+                          LocationPreference.saveBool(value);
                         },
                         activeColor:
                             Colors.blue, // The color when the switch is ON

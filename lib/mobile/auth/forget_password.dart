@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:yardify/widgets/custom_button.dart';
 
 class ForgetPassword extends StatelessWidget {
   const ForgetPassword({super.key});
@@ -16,6 +17,8 @@ class ForgetPassword extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [Text("In progress", style: TextStyle())],
             ),
+            TextField(decoration: InputDecoration(hintText: 'Email'),),
+            CustomButton(btntext: 'Reset Password',)
           ],
         ),
       ),

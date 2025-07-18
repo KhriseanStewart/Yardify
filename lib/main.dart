@@ -1,11 +1,18 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
+import 'package:path/path.dart';
 import 'package:yardify/firebase_options.dart';
+import 'package:yardify/mobile/database/notification_service.dart';
 import 'package:yardify/mobile/database/shared_preference.dart';
 import 'package:yardify/routes.dart';
 import 'package:yardify/widgets/theme_data.dart';
+
+Future<void> _backgroundMessaging(RemoteMessage message) async {
+  NotificationService().backgroundNotification;
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +28,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    FirebaseMessaging.onBackgroundMessage(_backgroundMessaging);
     runApp(const MyApp());
   } catch (e) {
     runApp(
@@ -48,6 +56,9 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     loadThemePreference();
+    WidgetsBinding.instance?.addPostFrameCallback((_) {
+      NotificationService().terminatedApp;
+    });
   }
 
   void loadThemePreference() async {

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:feather_icons/feather_icons.dart';
@@ -7,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:yardify/mobile/database/check_internet.dart';
 import 'package:yardify/mobile/database/item_list.dart';
+import 'package:yardify/mobile/database/notification_service.dart';
+import 'package:yardify/mobile/screens/messaging/messaging_screen.dart';
 import 'package:yardify/mobile/screens/product/dis_product_card.dart';
 import 'package:yardify/routes.dart';
 import 'package:yardify/widgets/constant.dart';
@@ -30,10 +33,27 @@ class _MobileDiscoverState extends State<MobileDiscover> {
   _connectivitySubscription;
   bool isConnected = true;
   List<ConnectivityResult> _connectionStatus = [ConnectivityResult.none];
+  final ValueNotifier<bool> _isScrolledNotifier = ValueNotifier<bool>(false);
+  final ScrollController _scrollController = ScrollController();
+  bool isScroll = false;
+
+  void setisScroll() {
+    setState(() {
+      isScroll = _isScrolledNotifier as bool;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    NotificationService().pushToken(auth.currentUser!.uid);
+    NotificationService().firebaseMessaging(context);
+    _scrollController.addListener(() {
+      final bool isScrolledNow = _scrollController.offset > 50;
+      if (isScrolledNow != _isScrolledNotifier.value) {
+        _isScrolledNotifier.value = isScrolledNow;
+      }
+    });
     _connectivity = Connectivity();
     checkInternet.checkInitialConnectivity(_connectivity, context);
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
@@ -50,6 +70,8 @@ class _MobileDiscoverState extends State<MobileDiscover> {
   @override
   void dispose() {
     _connectivitySubscription.cancel();
+    _scrollController.dispose();
+    _isScrolledNotifier.dispose();
     super.dispose();
   }
 
@@ -80,20 +102,66 @@ class _MobileDiscoverState extends State<MobileDiscover> {
         }
         return Scaffold(
           body: SafeArea(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    buildHeader(),
-                    buildSearchBar(items, snapshot),
-                    SizedBox(height: 8),
-                    SizedBox(height: 220, child: buildStreamAds(adsList)),
-                    buildStreamList(categories, itemList),
-                  ],
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                ValueListenableBuilder(
+                  valueListenable: _isScrolledNotifier,
+                  builder: (context, value, child) {
+                    final double targetHeight = value
+                        ? 80.0
+                        : 140.0; // Adjust your heights
+                    return AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      child: SliverAppBar(
+                        leading: Container(),
+                        backgroundColor: Colors.white,
+                        toolbarHeight: targetHeight,
+                        pinned: true,
+                        expandedHeight: targetHeight,
+                        flexibleSpace: FlexibleSpaceBar(
+                          background: ValueListenableBuilder<bool>(
+                            valueListenable: _isScrolledNotifier,
+                            builder: (context, isScrolled, _) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12.0,
+                                ),
+                                child: AnimatedSwitcher(
+                                  duration: Duration(milliseconds: 200),
+                                  transitionBuilder: (child, animation) {
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: SizeTransition(
+                                        sizeFactor: animation,
+                                        axis: Axis.horizontal,
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: isScrolled
+                                      ? // Smaller header with "Discover" and search bar side by side
+                                        _buildCompactHeader(items, snapshot)
+                                      : // Full header with icons, "Discover" text, and search bar below
+                                        _buildFullHeader(items, snapshot),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
+                // Ads
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 220, child: buildStreamAds(adsList)),
+                ),
+                // Categories list
+                SliverToBoxAdapter(
+                  child: buildStreamList(categories, itemList),
+                ),
+              ],
             ),
           ),
         );
@@ -101,92 +169,198 @@ class _MobileDiscoverState extends State<MobileDiscover> {
     );
   }
 
+  // Full header: icons + "Discover" + search bar below
+  Widget _buildFullHeader(items, snapshot) {
+    return Container(
+      key: ValueKey('fullHeader'),
+      height: 140,
+      child: Column(
+        children: [
+          // Header with icons and "Discover" text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                onPressed: () {
+                  print(isConnected);
+                  displaySnackBar(context, "Coming soon");
+                },
+                icon: Icon(
+                  Icons.notifications_outlined,
+                  size: 30,
+                  color: Colors.black,
+                ),
+              ),
+              isConnected
+                  ? Text(
+                      "Discover",
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : Shimmer.fromColors(
+                      baseColor: Colors.grey.shade400,
+                      highlightColor: Colors.grey.shade200,
+                      child: Text(
+                        "Discover",
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MessagingScreen()),
+                  );
+                },
+                icon: Icon(FeatherIcons.messageCircle, size: 30),
+              ),
+            ],
+          ),
+          // Search bar below icons
+          SizedBox(height: 70, child: buildSearchBar(items, snapshot)),
+        ],
+      ),
+    );
+  }
+
+  // Compact header: "Discover" and search bar side by side
+  Widget _buildCompactHeader(items, snapshot) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: SizedBox(height: 70, child: buildSearchBar(items, snapshot)),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: () {
+                  print(isConnected);
+                  displaySnackBar(context, "Coming soon");
+                },
+                icon: Icon(
+                  Icons.notifications_outlined,
+                  size: 30,
+                  color: Colors.black,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  displaySnackBar(context, "Coming soon");
+                },
+                icon: Icon(FeatherIcons.messageCircle, size: 30),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget buildSearchBar(
     List<QueryDocumentSnapshot<Object?>> items,
     AsyncSnapshot<QuerySnapshot<Object?>> snapshot,
   ) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(width: 0.3),
-      ),
-      child: SearchAnchor.bar(
-        barElevation: WidgetStatePropertyAll(0),
-        barBackgroundColor: WidgetStatePropertyAll(
-          Theme.of(context).primaryColor,
+    return SizedBox(
+      height: 80,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(width: 0.3),
         ),
-        barHintText: "Search",
-        searchController: searchController,
-        suggestionsBuilder: (context, controller) {
-          final input = controller.text.toLowerCase();
-          final filtered = items.where((item) {
-            final name = (item['name'] ?? '').toString().toLowerCase();
-            return input.isEmpty || name.contains(input);
-          }).toList();
+        child: SearchAnchor.bar(
+          barElevation: WidgetStatePropertyAll(0),
+          barBackgroundColor: WidgetStatePropertyAll(
+            Theme.of(context).primaryColor,
+          ),
+          barHintText: "Search",
+          searchController: searchController,
+          suggestionsBuilder: (context, controller) {
+            final input = controller.text.toLowerCase();
+            final filtered = items.where((item) {
+              final name = (item['name'] ?? '').toString().toLowerCase();
+              return input.isEmpty || name.contains(input);
+            }).toList();
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return [ListTile(title: Text('Loading...'))];
-          }
-          if (snapshot.hasError) {
-            return [ListTile(title: Text('Error: ${snapshot.error}'))];
-          }
-          if (!snapshot.hasData || items.isEmpty) {
-            return [ListTile(title: Text('No items found'))];
-          }
-          if (filtered.isEmpty) {
-            return [ListTile(title: Text('No matches'))];
-          }
-          return filtered.map((item) {
-            return ListTile(
-              title: Text(item['name'] ?? 'No name'),
-              subtitle: Text(item['location'] ?? 'No location'),
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  AppRouter.mobileproduct,
-                  arguments: item,
-                );
-              },
-            );
-          }).toList();
-        },
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return [ListTile(title: Text('Loading...'))];
+            }
+            if (snapshot.hasError) {
+              return [ListTile(title: Text('Error: ${snapshot.error}'))];
+            }
+            if (!snapshot.hasData || items.isEmpty) {
+              return [ListTile(title: Text('No items found'))];
+            }
+            if (filtered.isEmpty) {
+              return [ListTile(title: Text('No matches'))];
+            }
+            return filtered.map((item) {
+              return ListTile(
+                title: Text(item['name'] ?? 'No name'),
+                subtitle: Text(item['location'] ?? 'No location'),
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    AppRouter.mobileproduct,
+                    arguments: item,
+                  );
+                },
+              );
+            }).toList();
+          },
+        ),
       ),
     );
   }
 
   Widget buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          onPressed: () {
-            print(isConnected);
-            displaySnackBar(context, "Coming soon");
-          },
-          icon: Icon(Icons.notifications_outlined, size: 30),
-        ),
-        isConnected
-            ? Text(
-                "Discover",
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-              )
-            : Shimmer.fromColors(
-                baseColor: Colors.grey.shade400,
-                highlightColor: Colors.grey.shade200,
-                child: Text(
-                  "Discover",
-                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                ),
-              ),
-        IconButton(
-          onPressed: () {
-            displaySnackBar(context, "Coming soon");
-          },
-          icon: Icon(FeatherIcons.messageCircle, size: 30),
-        ),
-      ],
+    return SizedBox(
+      height: 40,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            onPressed: () {
+              print(isConnected);
+              displaySnackBar(context, "Coming soon");
+            },
+            icon: Icon(Icons.notifications_outlined, size: 30),
+          ),
+          Opacity(
+            opacity: isScroll ? 1 : 0.5,
+            child: isConnected
+                ? Text(
+                    "Discover",
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                  )
+                : Shimmer.fromColors(
+                    baseColor: Colors.grey.shade400,
+                    highlightColor: Colors.grey.shade200,
+                    child: Text(
+                      "Discover",
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+          ),
+          IconButton(
+            onPressed: () {
+              displaySnackBar(context, "Coming soon");
+            },
+            icon: Icon(FeatherIcons.messageCircle, size: 30),
+          ),
+        ],
+      ),
     );
   }
 
@@ -283,23 +457,33 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                 ),
               ),
             ),
-            Image.network(
-              ad['imageUrl'],
-              width: containerWidth * 0.4,
+            CachedNetworkImage(
+              imageUrl: ad['imageUrl'] ?? "Ad Header",
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(
-                  Icons.image_not_supported_outlined,
-                  color: Colors.grey,
-                  size: containerWidth * 0.4,
-                );
+              width: containerWidth * 0.4,
+              errorWidget: (context, url, error) {
+                return Icon(Icons.image_not_supported_outlined, size: 20);
               },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) {
-                  return child;
-                } else {
-                  return LoadingScreen(color: Colors.black);
-                }
+              progressIndicatorBuilder: (context, url, progress) {
+                return Image.network(
+                  url,
+                  width: containerWidth * 0.4,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Colors.grey,
+                      size: containerWidth * 0.4,
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) {
+                      return child;
+                    } else {
+                      return LoadingScreen(color: Colors.black);
+                    }
+                  },
+                );
               },
             ),
           ],
@@ -352,7 +536,7 @@ class _MobileDiscoverState extends State<MobileDiscover> {
               ),
             ),
             SizedBox(
-              height: 320,
+              height: 260,
               child: StreamBuilder(
                 stream: itemList,
                 builder: (context, snapshot) {
@@ -365,7 +549,7 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                   } else if (snapshot.hasError) {
                     return Center(child: Text("Error: ${snapshot.error}"));
                   } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(child: Text("No items found"));
+                    SizedBox;
                   }
                   // Filter items by category
                   final items = cat == "All"
@@ -376,7 +560,7 @@ class _MobileDiscoverState extends State<MobileDiscover> {
                         }).toList();
 
                   if (items.isEmpty) {
-                    return Center(child: Text("No items in $cat"));
+                    return SizedBox();
                   }
 
                   return ListView.builder(

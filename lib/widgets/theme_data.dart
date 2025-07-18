@@ -19,7 +19,8 @@ ThemeData lightTheme = ThemeData(
   shadowColor: Colors.grey.shade300,
   textTheme: GoogleFonts.robotoTextTheme(ThemeData.light().textTheme),
   colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
-  scaffoldBackgroundColor: hexToColor("#F5F5F5"),
+  // scaffoldBackgroundColor: hexToColor("#F5F5F5"),
+  scaffoldBackgroundColor: Colors.white,
   appBarTheme: AppBarTheme(
     backgroundColor: Colors.transparent,
     surfaceTintColor: Colors.white,

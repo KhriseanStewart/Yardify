@@ -74,6 +74,7 @@ class ProfileTabs extends StatelessWidget {
                         "Sellers Dashboard",
                         style: TextStyle(
                           fontSize: 14,
+                          fontWeight: FontWeight.bold,
                           color: Theme.of(context).textTheme.labelMedium?.color,
                         ),
                       ),
@@ -100,6 +101,8 @@ class ProfileTabs extends StatelessWidget {
                       title: Text(
                         "Post Ads",
                         style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
                           color: Theme.of(context).textTheme.labelMedium?.color,
                         ),
                       ),

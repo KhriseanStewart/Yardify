@@ -28,9 +28,7 @@ class _GetStartedState extends State<GetStarted> {
 
   void _checkPermissions() async {
     bool permsGranted = await Permissions().requestPerms();
-    if (permsGranted) {
-      
-    }
+    if (permsGranted) {}
   }
 
   void checkRememberMe() async {
@@ -62,6 +60,7 @@ class _GetStartedState extends State<GetStarted> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       displaySnackBar(context, "An error occured ");
     }
   }
